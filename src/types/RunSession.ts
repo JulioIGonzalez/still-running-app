@@ -3,11 +3,9 @@ export type LatLngPoint = {
   lng: number;
 };
 
-export type RunStatus = 'idle' | 'running';
-
 export type RunSession = {
   id: string;
-  date: string; // ISO string
+  date: number; // Date.now()
   durationMs: number;
   distanceMeters: number;
   path: LatLngPoint[];
