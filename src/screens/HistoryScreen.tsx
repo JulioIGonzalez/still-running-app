@@ -1,35 +1,69 @@
-import { getSessions } from '../types/RunStorage';
+import { useEffect, useState } from 'react';
+import { RunStorage, StoredRunSession } from '../types/RunStorage';
+
+const formatTime = (ms: number) => {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+const formatDistance = (meters: number) => {
+  return (meters / 1000).toFixed(2);
+};
 
 export default function HistoryScreen() {
-  const sessions = getSessions();
+  const [sessions, setSessions] = useState<StoredRunSession[]>([]);
 
-  if (sessions.length === 0) {
-    return (
-      <div style={{ padding: 20 }}>
-        <h2>Historial</h2>
-        <p>No hay sesiones guardadas</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    setSessions(RunStorage.getAll());
+  }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Historial de corridas</h2>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#0f172a',
+        color: 'white',
+        padding: 20,
+      }}
+    >
+      <h1 style={{ fontSize: 28, marginBottom: 20 }}>
+        📜 Historial de sesiones
+      </h1>
 
-      {sessions.map((s) => (
+      {sessions.length === 0 && (
+        <p style={{ opacity: 0.7 }}>
+          No hay sesiones guardadas todavía.
+        </p>
+      )}
+
+      {sessions.map((session) => (
         <div
-          key={s.id}
+          key={session.id}
           style={{
-            background: '#111',
-            color: '#fff',
-            padding: 12,
-            marginBottom: 12,
-            borderRadius: 8,
+            background: '#020617',
+            borderRadius: 14,
+            padding: 16,
+            marginBottom: 14,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
           }}
         >
-          <div>📅 {new Date(s.date).toLocaleDateString()}</div>
-          <div>⏱ {(s.durationMs / 60000).toFixed(1)} min</div>
-          <div>📏 {(s.distanceMeters / 1000).toFixed(2)} km</div>
+          <div style={{ fontSize: 13, opacity: 0.6 }}>
+            {new Date(session.createdAt).toLocaleString()}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: 10,
+              fontSize: 16,
+            }}
+          >
+            <span>⏱ {formatTime(session.elapsedMs)}</span>
+            <span>📏 {formatDistance(session.totalDistance)} km</span>
+          </div>
         </div>
       ))}
     </div>
