@@ -1,7 +1,7 @@
 import MapView from '../components/MapView';
 import { useRunSession } from '../hooks/useRunSession';
+import { useNavigate } from 'react-router-dom';
 
-/* ---------- helpers ---------- */
 const formatTime = (ms: number) => {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -9,112 +9,57 @@ const formatTime = (ms: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const formatDistance = (meters: number) => {
-  return (meters / 1000).toFixed(2);
-};
-
-/* ---------- styles ---------- */
-const overlayBase = {
-  background: 'rgba(0,0,0,0.65)',
-  color: 'white',
-  borderRadius: 12,
-  boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
-};
-
-const startButtonStyle = {
-  width: 96,
-  height: 96,
-  borderRadius: '50%',
+const baseButtonStyle: React.CSSProperties = {
   border: 'none',
-  background: '#1DB954',
-  color: 'white',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  boxShadow: '0 6px 14px rgba(0,0,0,0.5)',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 4,
-};
-
-const controlButton = {
-  padding: '12px 20px',
-  borderRadius: 10,
-  border: 'none',
+  borderRadius: 999,
+  padding: '16px 22px',
   fontSize: 16,
-  fontWeight: 'bold',
+  fontWeight: 600,
   cursor: 'pointer',
-  color: 'white',
-  boxShadow: '0 4px 10px rgba(0,0,0,0.4)',
+  boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
+  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
 };
 
-/* ---------- component ---------- */
 export default function RunScreen() {
   const {
     isRunning,
     isPaused,
     path,
     elapsedMs,
-    totalDistance,
     start,
     stop,
     pause,
     resume,
   } = useRunSession();
 
+  const navigate = useNavigate();
+
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      {/* MAPA */}
-      <MapView path={path} />
-
-      {/* CRONÓMETRO (arriba centro) */}
+      {/* CRONÓMETRO */}
       <div
         style={{
-          ...overlayBase,
           position: 'absolute',
           top: 20,
           left: '50%',
           transform: 'translateX(-50%)',
-          padding: '12px 28px',
-          fontSize: 28,
           zIndex: 1000,
+          background: 'rgba(0,0,0,0.75)',
+          color: 'white',
+          padding: '14px 28px',
+          borderRadius: 16,
+          fontSize: 32,
+          fontWeight: 700,
+          letterSpacing: 1,
         }}
       >
         {formatTime(elapsedMs)}
       </div>
 
-      {/* INFO PANEL (izquierda) */}
-      <div
-        style={{
-          ...overlayBase,
-          position: 'absolute',
-          top: 90,
-          left: 20,
-          padding: 16,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          zIndex: 1000,
-          minWidth: 180,
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Tiempo</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>
-            {formatTime(elapsedMs)}
-          </div>
-        </div>
+      {/* MAPA */}
+      <MapView path={path} />
 
-        <div>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Kilómetros</div>
-          <div style={{ fontSize: 18, fontWeight: 'bold' }}>
-            {formatDistance(totalDistance)} km
-          </div>
-        </div>
-      </div>
-
-      {/* CONTROLES (abajo centro) */}
+      {/* CONTROLES */}
       <div
         style={{
           position: 'absolute',
@@ -127,39 +72,84 @@ export default function RunScreen() {
           alignItems: 'center',
         }}
       >
+        {/* START */}
         {!isRunning && (
-          <button style={startButtonStyle} onClick={start}>
-            <div style={{ fontSize: 30, lineHeight: 1 }}>▶</div>
-            <div style={{ fontSize: 14 }}>Iniciar</div>
+          <button
+            onClick={start}
+            style={{
+              ...baseButtonStyle,
+              background: '#22c55e',
+              color: '#022c22',
+              width: 90,
+              height: 90,
+              fontSize: 18,
+            }}
+          >
+            ▶ Iniciar
           </button>
         )}
 
+        {/* PAUSE */}
         {isRunning && !isPaused && (
-          <>
-            <button
-              style={{ ...controlButton, background: '#f39c12' }}
-              onClick={pause}
-            >
-              ⏸ Pausa
-            </button>
-            <button
-              style={{ ...controlButton, background: '#e74c3c' }}
-              onClick={stop}
-            >
-              ⏹ Stop
-            </button>
-          </>
+          <button
+            onClick={pause}
+            style={{
+              ...baseButtonStyle,
+              background: '#facc15',
+              color: '#422006',
+            }}
+          >
+            ⏸ Pausa
+          </button>
         )}
 
+        {/* RESUME */}
         {isRunning && isPaused && (
           <button
-            style={{ ...controlButton, background: '#1DB954' }}
             onClick={resume}
+            style={{
+              ...baseButtonStyle,
+              background: '#22c55e',
+              color: '#022c22',
+            }}
           >
             ▶ Reanudar
           </button>
         )}
+
+        {/* STOP */}
+        {isRunning && (
+          <button
+            onClick={stop}
+            style={{
+              ...baseButtonStyle,
+              background: '#ef4444',
+              color: '#450a0a',
+            }}
+          >
+            ⏹ Stop
+          </button>
+        )}
       </div>
+
+      {/* BOTÓN HISTORIAL */}
+      <button
+        onClick={() => navigate('/history')}
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 1000,
+          padding: '10px 14px',
+          borderRadius: 10,
+          border: 'none',
+          cursor: 'pointer',
+          background: 'rgba(0,0,0,0.6)',
+          color: 'white',
+        }}
+      >
+        📜 Historial
+      </button>
     </div>
   );
 }
