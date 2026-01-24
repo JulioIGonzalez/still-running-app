@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGeolocation } from './useGeolocation';
 
 export type RunStatus = 'idle' | 'running';
@@ -11,11 +11,14 @@ export type LatLngPoint = {
 export function useRunSession() {
   const [status, setStatus] = useState<RunStatus>('idle');
   const [path, setPath] = useState<LatLngPoint[]>([]);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
+  const intervalRef = useRef<number | null>(null);
   const { position } = useGeolocation();
 
   const start = () => {
     setPath([]);
+    setElapsedMs(0);
     setStatus('running');
   };
 
@@ -23,6 +26,29 @@ export function useRunSession() {
     setStatus('idle');
   };
 
+  // 🕒 CRONÓMETRO
+  useEffect(() => {
+    if (status !== 'running') {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    intervalRef.current = window.setInterval(() => {
+      setElapsedMs((prev) => prev + 1000);
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [status]);
+
+  // 📍 GPS PATH
   useEffect(() => {
     if (status !== 'running' || !position) return;
 
@@ -36,7 +62,7 @@ export function useRunSession() {
     status,
     isRunning: status === 'running',
     path,
-    position,
+    elapsedMs,
     start,
     stop,
   };
