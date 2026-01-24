@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useGeolocation } from './useGeolocation';
+import type { LatLngPoint } from '../types/RunTypes';
 import { saveSession } from '../types/RunStorage';
-import type { RunSession, LatLngPoint } from '../types/RunSession';
 
 export type RunStatus = 'idle' | 'running';
 
@@ -20,7 +20,6 @@ export function haversineDistance(p1: LatLngPoint, p2: LatLngPoint) {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
   return R * c;
 }
 
@@ -33,7 +32,6 @@ export function useRunSession() {
   const intervalRef = useRef<number | null>(null);
   const { position } = useGeolocation();
 
-  // START
   const start = () => {
     setPath([]);
     setElapsedMs(0);
@@ -41,30 +39,26 @@ export function useRunSession() {
     setIsPaused(false);
   };
 
-  // STOP → guarda sesión
   const stop = () => {
     if (path.length > 1) {
-      const session: RunSession = {
+      saveSession({
         id: crypto.randomUUID(),
-        date: Date.now(),
+        date: Date.now(), // 👈 NUMBER
         durationMs: elapsedMs,
         distanceMeters: totalDistance,
         path,
-      };
-
-      saveSession(session);
+      });
     }
 
     setStatus('idle');
     setElapsedMs(0);
-    setPath([]);
     setIsPaused(false);
+    setPath([]);
   };
 
   const pause = () => setIsPaused(true);
   const resume = () => setIsPaused(false);
 
-  // Cronómetro
   useEffect(() => {
     if (status !== 'running' || isPaused) {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -82,14 +76,12 @@ export function useRunSession() {
     };
   }, [status, isPaused]);
 
-  // Guardar path
   useEffect(() => {
     if (status !== 'running' || isPaused || !position) return;
 
     setPath((prev) => [...prev, { lat: position.lat, lng: position.lng }]);
   }, [position, status, isPaused]);
 
-  // Distancia total
   const totalDistance = useMemo(() => {
     if (path.length < 2) return 0;
 
@@ -99,12 +91,9 @@ export function useRunSession() {
     }, 0);
   }, [path]);
 
-  // Pace min/km
   const pace = useMemo(() => {
     if (elapsedMs === 0 || totalDistance === 0) return 0;
-    const minutes = elapsedMs / 1000 / 60;
-    const km = totalDistance / 1000;
-    return minutes / km;
+    return elapsedMs / 60000 / (totalDistance / 1000);
   }, [elapsedMs, totalDistance]);
 
   return {

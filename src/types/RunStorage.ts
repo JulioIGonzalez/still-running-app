@@ -1,14 +1,28 @@
-import type { RunSession } from '../types/RunSession';
+import type { LatLngPoint } from './RunTypes';
 
-const STORAGE_KEY = 'runner_sessions';
+export type StoredRunSession = {
+  id: string;
+  date: number; // 👈 TIMESTAMP
+  durationMs: number;
+  distanceMeters: number;
+  path: LatLngPoint[];
+};
 
-export function getSessions(): RunSession[] {
+const STORAGE_KEY = 'run_sessions';
+
+export function getSessions(): StoredRunSession[] {
   const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  if (!raw) return [];
+
+  try {
+    return JSON.parse(raw) as StoredRunSession[];
+  } catch {
+    return [];
+  }
 }
 
-export function saveSession(session: RunSession) {
+export function saveSession(session: StoredRunSession) {
   const sessions = getSessions();
-  sessions.unshift(session); // la más nueva arriba
+  sessions.unshift(session);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
 }
