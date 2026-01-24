@@ -90,10 +90,7 @@ export default function RunScreen() {
       </div>
 
       {/* MAPA */}
-      <MapView
-        isRunning={isRunning && !isPaused}
-        path={path}
-      />
+      <MapView path={path} />
 
       {/* CONTROLES */}
       <div
