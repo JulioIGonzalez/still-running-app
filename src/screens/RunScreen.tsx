@@ -1,18 +1,22 @@
 import MapView from '../components/MapView';
 import { useRunSession } from '../hooks/useRunSession';
 
-// Helper para mostrar el tiempo en minutos:segundos
 const formatTime = (ms: number) => {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-// Helper para mostrar la distancia en km con 2 decimales
 const formatDistance = (meters: number) => {
   return (meters / 1000).toFixed(2);
+};
+
+const formatPace = (pace: number) => {
+  if (!pace || !isFinite(pace)) return '--:--';
+  const minutes = Math.floor(pace);
+  const seconds = Math.round((pace - minutes) * 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')} min/km`;
 };
 
 export default function RunScreen() {
@@ -22,6 +26,7 @@ export default function RunScreen() {
     path,
     elapsedMs,
     totalDistance,
+    pace,
     start,
     stop,
     pause,
@@ -29,14 +34,7 @@ export default function RunScreen() {
   } = useRunSession();
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100vw',
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       {/* CRONÓMETRO */}
       <div
         style={{
@@ -73,6 +71,24 @@ export default function RunScreen() {
         {formatDistance(totalDistance)} km
       </div>
 
+      {/* PACE */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 100,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000,
+          background: 'rgba(0,0,0,0.6)',
+          color: 'white',
+          padding: '8px 16px',
+          borderRadius: 8,
+          fontSize: 18,
+        }}
+      >
+        {formatPace(pace)}
+      </div>
+
       {/* MAPA */}
       <MapView
         isRunning={isRunning && !isPaused}
@@ -90,11 +106,9 @@ export default function RunScreen() {
           gap: 12,
         }}
       >
-        {/* START / STOP */}
         {!isRunning && <button onClick={start}>▶ Start</button>}
         {isRunning && !isPaused && <button onClick={stop}>⏹ Stop</button>}
 
-        {/* PAUSE / RESUME */}
         {isRunning && !isPaused && <button onClick={pause}>⏸ Pause</button>}
         {isRunning && isPaused && <button onClick={resume}>▶ Resume</button>}
       </div>

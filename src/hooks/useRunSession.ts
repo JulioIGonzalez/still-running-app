@@ -40,14 +40,13 @@ export function useRunSession() {
     setIsPaused(false);
   };
 
-  // Stop ahora también resetea elapsedMs
+  // Stop
   const stop = () => {
     setStatus('idle');
-    setElapsedMs(0); // <--- reset
-    setIsPaused(false); // opcional, aseguramos que no quede pausado
+    setElapsedMs(0);
+    setIsPaused(false);
   };
 
-  // Pause y Resume
   const pause = () => setIsPaused(true);
   const resume = () => setIsPaused(false);
 
@@ -72,7 +71,6 @@ export function useRunSession() {
   // Guardar path mientras corre
   useEffect(() => {
     if (status !== 'running' || isPaused || !position) return;
-
     setPath((prev) => [...prev, { lat: position.lat, lng: position.lng }]);
   }, [position, status, isPaused]);
 
@@ -85,6 +83,14 @@ export function useRunSession() {
     }, 0);
   }, [path]);
 
+  // Pace en min/km
+  const pace = useMemo(() => {
+    if (path.length < 2 || elapsedMs === 0) return 0;
+    const km = totalDistance / 1000;
+    const minutes = elapsedMs / 1000 / 60;
+    return minutes / km; // min/km
+  }, [path, elapsedMs, totalDistance]);
+
   return {
     status,
     isRunning: status === 'running',
@@ -92,6 +98,7 @@ export function useRunSession() {
     path,
     elapsedMs,
     totalDistance,
+    pace,
     start,
     stop,
     pause,
