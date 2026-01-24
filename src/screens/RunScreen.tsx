@@ -16,14 +16,16 @@ const formatDistance = (meters: number) => {
 };
 
 export default function RunScreen() {
-  // Destructuring del hook, ahora incluye totalDistance
   const {
     isRunning,
+    isPaused,
     path,
     elapsedMs,
     totalDistance,
     start,
     stop,
+    pause,
+    resume,
   } = useRunSession();
 
   return (
@@ -73,7 +75,7 @@ export default function RunScreen() {
 
       {/* MAPA */}
       <MapView
-        isRunning={isRunning}
+        isRunning={isRunning && !isPaused}
         path={path}
       />
 
@@ -88,12 +90,13 @@ export default function RunScreen() {
           gap: 12,
         }}
       >
-        {!isRunning && (
-          <button onClick={start}>▶ Start</button>
-        )}
-        {isRunning && (
-          <button onClick={stop}>⏹ Stop</button>
-        )}
+        {/* START / STOP */}
+        {!isRunning && <button onClick={start}>▶ Start</button>}
+        {isRunning && !isPaused && <button onClick={stop}>⏹ Stop</button>}
+
+        {/* PAUSE / RESUME */}
+        {isRunning && !isPaused && <button onClick={pause}>⏸ Pause</button>}
+        {isRunning && isPaused && <button onClick={resume}>▶ Resume</button>}
       </div>
     </div>
   );
