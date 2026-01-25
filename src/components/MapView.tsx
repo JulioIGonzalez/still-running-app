@@ -1,14 +1,20 @@
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
 import { useEffect } from 'react';
+import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
 import { useGeolocation } from '../hooks/useGeolocation';
 import L from 'leaflet';
 
-type LatLngPoint = { lat: number; lng: number };
-type MapViewProps = { path: LatLngPoint[] }; // sin isRunning
+export type LatLngPoint = { lat: number; lng: number };
+
+type MapViewProps = {
+  path: LatLngPoint[];
+  zoom?: number; // <--- agregamos zoom opcional
+};
 
 function FollowUser({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
-  useEffect(() => { map.setView([lat, lng], 16); }, [lat, lng, map]);
+  useEffect(() => {
+    map.setView([lat, lng], map.getZoom());
+  }, [lat, lng, map]);
   return null;
 }
 
@@ -21,11 +27,15 @@ const createColorMarker = (color: string) =>
     iconAnchor: [8, 8],
   });
 
-export default function MapView({ path }: MapViewProps) {
+export default function MapView({ path, zoom }: MapViewProps) {
   const { position } = useGeolocation();
 
   return (
-    <MapContainer center={[-34.6037, -58.3816]} zoom={13} style={{ width: '100%', height: '100%' }}>
+    <MapContainer
+      center={[-34.6037, -58.3816]}
+      zoom={zoom ?? 13} // usamos la prop zoom si existe
+      style={{ width: '100%', height: '100%' }}
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution="&copy; OpenStreetMap contributors"

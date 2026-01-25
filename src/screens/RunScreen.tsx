@@ -23,12 +23,16 @@ export default function RunScreen() {
   } = useRunSession();
 
   const [showHistory, setShowHistory] = useState(false);
+  const [mapZoom, setMapZoom] = useState(13); // control de zoom
   const sessions = getSessions();
+
+  const zoomIn = () => setMapZoom((z) => Math.min(z + 1, 20));
+  const zoomOut = () => setMapZoom((z) => Math.max(z - 1, 1));
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       {/* MAPA */}
-      <MapView path={path} />
+      <MapView path={path} zoom={mapZoom} />
 
       {/* CRONÓMETRO */}
       <div
@@ -38,11 +42,11 @@ export default function RunScreen() {
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1000,
-          background: 'rgba(0,0,0,0.75)',
+          background: 'rgba(0, 0, 0, 0.53)',
           color: 'white',
           padding: '14px 28px',
-          borderRadius: 16,
-          fontSize: 32,
+          borderRadius: 18,
+          fontSize: 28,
           fontWeight: 700,
         }}
       >
@@ -51,27 +55,27 @@ export default function RunScreen() {
 
       {/* BOTÓN HISTORIAL */}
       <button
-        onClick={() => setShowHistory(!showHistory)}
+        onClick={() => setShowHistory(true)}
         style={{
           position: 'absolute',
-          top: 20,
-          left: 20,
+          top: 90,
+          right: 20,
           zIndex: 1000,
-          padding: '12px 18px',
-          borderRadius: 12,
+          padding: '14px 20px',
+          fontSize: 18,
+          fontWeight: 600,
+          borderRadius: 16,
           border: 'none',
           cursor: 'pointer',
-          fontWeight: 'bold',
-          fontSize: 16,
-          background: 'rgba(2,6,23,0.85)',
+          background: 'rgba(18, 35, 110, 0.56)',
           color: 'white',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
         }}
       >
         📜 Historial
       </button>
 
-      {/* CONTROLES PRINCIPALES */}
+      {/* CONTROLES DE INICIO/PAUSA/STOP */}
       <div
         style={{
           position: 'absolute',
@@ -101,17 +105,21 @@ export default function RunScreen() {
             ▶ Iniciar
           </button>
         )}
+
         {isRunning && !isPaused && (
           <button
             onClick={pause}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#f39c12',
-              color: 'white',
+              width: 90,
+              height: 90,
+              padding: '14px 20px',
+              borderRadius: '50%',
+              background: '#facc15',
               border: 'none',
+              fontSize: 16,
+              fontWeight: 600,
               cursor: 'pointer',
-              fontWeight: 'bold',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
             }}
           >
             ⏸ Pausa
@@ -121,13 +129,16 @@ export default function RunScreen() {
           <button
             onClick={resume}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#27ae60',
-              color: 'white',
+              padding: '14px 20px',
+              width: 90,
+              height: 90,
+              borderRadius: '50%',
+              background: '#22dc76ff',
               border: 'none',
+              fontSize: 16,
+              fontWeight: 600,
               cursor: 'pointer',
-              fontWeight: 'bold',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
             }}
           >
             ▶ Reanudar
@@ -137,13 +148,16 @@ export default function RunScreen() {
           <button
             onClick={stop}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#c0392b',
-              color: 'white',
+              height: 90,
+              width: 90,
+              padding: '14px 20px',
+              borderRadius: '50%',
+              background: '#ef4444',
               border: 'none',
+              fontSize: 16,
+              fontWeight: 600,
               cursor: 'pointer',
-              fontWeight: 'bold',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
             }}
           >
             ⏹ Stop
@@ -151,31 +165,85 @@ export default function RunScreen() {
         )}
       </div>
 
+      {/* BOTONES DE ZOOM (lado derecho medio) */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          right: 20,
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          zIndex: 1000,
+        }}
+      >
+        <button
+          onClick={zoomIn}
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 12,
+            background: '#3b82f6',
+            border: 'none',
+            fontSize: 24,
+            color: 'white',
+            cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+          }}
+        >
+          +
+        </button>
+        <button
+          onClick={zoomOut}
+          style={{
+            width: 50,
+            height: 50,
+            borderRadius: 12,
+            background: '#ef4444',
+            border: 'none',
+            fontSize: 24,
+            color: 'white',
+            cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+          }}
+        >
+          –
+        </button>
+      </div>
+
       {/* HISTORIAL FLOTANTE */}
       {showHistory && (
         <div
           style={{
             position: 'absolute',
-            top: 80,
-            left: '20px', // lo podés ajustar a '50%' y usar transformX(-50%) para centrar
+            top: 60,
+            left: '20px',
+            width: '300px',
+            maxHeight: '70%',
             zIndex: 1200,
-            width: 300,
-            maxHeight: 400,
+            padding: 20,
             overflowY: 'auto',
-            padding: 16,
-            background: 'rgba(0,0,0,0.75)',
-            borderRadius: 16,
-            backdropFilter: 'blur(6px)',
-            boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
             color: 'white',
+            background: 'rgba(2,6,23,0.75)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: 16,
+            boxShadow: '0 8px 25px rgba(0,0,0,0.5)',
+            transition: 'opacity 0.3s ease',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginBottom: 12,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Historial</h3>
             <button
               onClick={() => setShowHistory(false)}
               style={{
-                padding: '4px 8px',
+                padding: '6px 10px',
                 borderRadius: 999,
                 border: 'none',
                 cursor: 'pointer',
@@ -195,7 +263,7 @@ export default function RunScreen() {
               key={s.id}
               style={{
                 background: 'rgba(15,23,42,0.85)',
-                padding: 10,
+                padding: 12,
                 borderRadius: 12,
                 marginBottom: 10,
               }}
