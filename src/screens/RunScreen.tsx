@@ -1,23 +1,13 @@
+import { useState } from 'react';
 import MapView from '../components/MapView';
 import { useRunSession } from '../hooks/useRunSession';
-import { useNavigate } from 'react-router-dom';
+import { getSessions } from '../types/RunStorage';
 
 const formatTime = (ms: number) => {
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
-const baseButtonStyle: React.CSSProperties = {
-  border: 'none',
-  borderRadius: 999,
-  padding: '16px 22px',
-  fontSize: 16,
-  fontWeight: 600,
-  cursor: 'pointer',
-  boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
-  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
 };
 
 export default function RunScreen() {
@@ -32,10 +22,14 @@ export default function RunScreen() {
     resume,
   } = useRunSession();
 
-  const navigate = useNavigate();
+  const [showHistory, setShowHistory] = useState(false);
+  const sessions = getSessions();
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      {/* MAPA */}
+      <MapView path={path} />
+
       {/* CRONÓMETRO */}
       <div
         style={{
@@ -50,16 +44,34 @@ export default function RunScreen() {
           borderRadius: 16,
           fontSize: 32,
           fontWeight: 700,
-          letterSpacing: 1,
         }}
       >
         {formatTime(elapsedMs)}
       </div>
 
-      {/* MAPA */}
-      <MapView path={path} />
+      {/* BOTÓN HISTORIAL */}
+      <button
+        onClick={() => setShowHistory(!showHistory)}
+        style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          zIndex: 1000,
+          padding: '12px 18px',
+          borderRadius: 12,
+          border: 'none',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          fontSize: 16,
+          background: 'rgba(2,6,23,0.85)',
+          color: 'white',
+          boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
+        }}
+      >
+        📜 Historial
+      </button>
 
-      {/* CONTROLES */}
+      {/* CONTROLES PRINCIPALES */}
       <div
         style={{
           position: 'absolute',
@@ -69,62 +81,69 @@ export default function RunScreen() {
           zIndex: 1000,
           display: 'flex',
           gap: 16,
-          alignItems: 'center',
         }}
       >
-        {/* START */}
         {!isRunning && (
           <button
             onClick={start}
             style={{
-              ...baseButtonStyle,
-              background: '#22c55e',
-              color: '#022c22',
               width: 90,
               height: 90,
+              borderRadius: '50%',
+              background: '#22c55e',
+              border: 'none',
               fontSize: 18,
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
             }}
           >
             ▶ Iniciar
           </button>
         )}
-
-        {/* PAUSE */}
         {isRunning && !isPaused && (
           <button
             onClick={pause}
             style={{
-              ...baseButtonStyle,
-              background: '#facc15',
-              color: '#422006',
+              padding: '12px 20px',
+              borderRadius: 12,
+              background: '#f39c12',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
             }}
           >
             ⏸ Pausa
           </button>
         )}
-
-        {/* RESUME */}
         {isRunning && isPaused && (
           <button
             onClick={resume}
             style={{
-              ...baseButtonStyle,
-              background: '#22c55e',
-              color: '#022c22',
+              padding: '12px 20px',
+              borderRadius: 12,
+              background: '#27ae60',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
             }}
           >
             ▶ Reanudar
           </button>
         )}
-
-        {/* STOP */}
         {isRunning && (
           <button
             onClick={stop}
             style={{
-              ...baseButtonStyle,
-              background: '#ef4444',
-              color: '#450a0a',
+              padding: '12px 20px',
+              borderRadius: 12,
+              background: '#c0392b',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 'bold',
             }}
           >
             ⏹ Stop
@@ -132,24 +151,62 @@ export default function RunScreen() {
         )}
       </div>
 
-      {/* BOTÓN HISTORIAL */}
-      <button
-        onClick={() => navigate('/history')}
-        style={{
-          position: 'absolute',
-          top: 20,
-          right: 20,
-          zIndex: 1000,
-          padding: '10px 14px',
-          borderRadius: 10,
-          border: 'none',
-          cursor: 'pointer',
-          background: 'rgba(0,0,0,0.6)',
-          color: 'white',
-        }}
-      >
-        📜 Historial
-      </button>
+      {/* HISTORIAL FLOTANTE */}
+      {showHistory && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 80,
+            left: '20px', // lo podés ajustar a '50%' y usar transformX(-50%) para centrar
+            zIndex: 1200,
+            width: 300,
+            maxHeight: 400,
+            overflowY: 'auto',
+            padding: 16,
+            background: 'rgba(0,0,0,0.75)',
+            borderRadius: 16,
+            backdropFilter: 'blur(6px)',
+            boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
+            color: 'white',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h3 style={{ margin: 0 }}>Historial</h3>
+            <button
+              onClick={() => setShowHistory(false)}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 999,
+                border: 'none',
+                cursor: 'pointer',
+                background: 'rgba(255,255,255,0.15)',
+                color: 'white',
+                fontWeight: 600,
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {sessions.length === 0 && <p style={{ opacity: 0.8 }}>No hay sesiones guardadas</p>}
+
+          {sessions.map((s) => (
+            <div
+              key={s.id}
+              style={{
+                background: 'rgba(15,23,42,0.85)',
+                padding: 10,
+                borderRadius: 12,
+                marginBottom: 10,
+              }}
+            >
+              <div>📅 {new Date(s.date).toLocaleDateString()}</div>
+              <div>⏱ {(s.durationMs / 60000).toFixed(1)} min</div>
+              <div>📏 {(s.distanceMeters / 1000).toFixed(2)} km</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
