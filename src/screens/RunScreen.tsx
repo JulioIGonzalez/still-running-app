@@ -10,68 +10,115 @@ const formatTime = (ms: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
+const getPaceColor = (pace: number) => {
+  if (pace === 0) return '#9ca3af'; // gris
+  if (pace < 5) return '#22c55e';   // verde
+  if (pace < 7) return '#facc15';   // amarillo
+  return '#ef4444';                 // rojo
+};
+
 export default function RunScreen() {
   const {
     isRunning,
     isPaused,
     path,
     elapsedMs,
+    totalDistance,
+    pace,
     start,
     stop,
     pause,
     resume,
   } = useRunSession();
 
+  const [showHUD, setShowHUD] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
   const sessions = getSessions();
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-      {/* MAPA */}
-      <MapView path={path} />
-
-      {/* CRONÓMETRO */}
+      {/* MAPA (click para ocultar/mostrar HUD) */}
       <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 1000,
-          background: 'rgba(0,0,0,0.75)',
-          color: 'white',
-          padding: '14px 28px',
-          borderRadius: 16,
-          fontSize: 32,
-          fontWeight: 700,
-        }}
+        onClick={() => setShowHUD((v) => !v)}
+        style={{ width: '100%', height: '100%' }}
       >
-        {formatTime(elapsedMs)}
+        <MapView path={path} />
       </div>
+
+      {/* HUD SUPERIOR */}
+      {showHUD && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 28,
+            padding: '14px 22px',
+            background: 'rgba(0,0,0,0.55)',
+            backdropFilter: 'blur(6px)',
+            borderRadius: 18,
+            color: 'white',
+            boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
+          }}
+        >
+          {/* PACE */}
+          <div style={{ textAlign: 'center', minWidth: 80 }}>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>PACE</div>
+            <div
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: getPaceColor(pace),
+              }}
+            >
+              {pace > 0 ? pace.toFixed(2) : '--'}
+            </div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>min/km</div>
+          </div>
+
+          {/* TIEMPO */}
+          <div style={{ textAlign: 'center', minWidth: 120 }}>
+            <div style={{ fontSize: 34, fontWeight: 800 }}>
+              {formatTime(elapsedMs)}
+            </div>
+          </div>
+
+          {/* DISTANCIA */}
+          <div style={{ textAlign: 'center', minWidth: 80 }}>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>DIST</div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>
+              {(totalDistance / 1000).toFixed(2)}
+            </div>
+            <div style={{ fontSize: 11, opacity: 0.6 }}>km</div>
+          </div>
+        </div>
+      )}
 
       {/* BOTÓN HISTORIAL */}
       <button
-        onClick={() => setShowHistory(!showHistory)}
+        onClick={() => setShowHistory(true)}
         style={{
           position: 'absolute',
-          top: 20,
-          left: 20,
+          top: 90,
+          right: 20,
           zIndex: 1000,
           padding: '12px 18px',
-          borderRadius: 12,
+          fontSize: 16,
+          borderRadius: 16,
           border: 'none',
           cursor: 'pointer',
-          fontWeight: 'bold',
-          fontSize: 16,
-          background: 'rgba(2,6,23,0.85)',
+          background: 'rgba(18,35,110,0.65)',
           color: 'white',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
         }}
       >
         📜 Historial
       </button>
 
-      {/* CONTROLES PRINCIPALES */}
+      {/* CONTROLES */}
       <div
         style={{
           position: 'absolute',
@@ -95,58 +142,60 @@ export default function RunScreen() {
               fontSize: 18,
               fontWeight: 700,
               cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.35)',
             }}
           >
-            ▶ Iniciar
+            ▶
           </button>
         )}
+
         {isRunning && !isPaused && (
           <button
             onClick={pause}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#f39c12',
-              color: 'white',
+              width: 90,
+              height: 90,
+              borderRadius: '50%',
+              background: '#facc15',
               border: 'none',
+              fontSize: 18,
               cursor: 'pointer',
-              fontWeight: 'bold',
             }}
           >
-            ⏸ Pausa
+            ⏸
           </button>
         )}
+
         {isRunning && isPaused && (
           <button
             onClick={resume}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#27ae60',
-              color: 'white',
+              width: 90,
+              height: 90,
+              borderRadius: '50%',
+              background: '#22c55e',
               border: 'none',
+              fontSize: 18,
               cursor: 'pointer',
-              fontWeight: 'bold',
             }}
           >
-            ▶ Reanudar
+            ▶
           </button>
         )}
+
         {isRunning && (
           <button
             onClick={stop}
             style={{
-              padding: '12px 20px',
-              borderRadius: 12,
-              background: '#c0392b',
-              color: 'white',
+              width: 90,
+              height: 90,
+              borderRadius: '50%',
+              background: '#ef4444',
               border: 'none',
+              fontSize: 18,
               cursor: 'pointer',
-              fontWeight: 'bold',
             }}
           >
-            ⏹ Stop
+            ⏹
           </button>
         )}
       </div>
@@ -156,50 +205,28 @@ export default function RunScreen() {
         <div
           style={{
             position: 'absolute',
-            top: 80,
-            left: '20px', // lo podés ajustar a '50%' y usar transformX(-50%) para centrar
-            zIndex: 1200,
+            top: 70,
+            left: 20,
             width: 300,
-            maxHeight: 400,
+            maxHeight: '70%',
+            zIndex: 1200,
+            padding: 20,
             overflowY: 'auto',
-            padding: 16,
-            background: 'rgba(0,0,0,0.75)',
-            borderRadius: 16,
-            backdropFilter: 'blur(6px)',
-            boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
+            background: 'rgba(2,6,23,0.75)',
+            backdropFilter: 'blur(8px)',
             color: 'white',
+            borderRadius: 16,
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h3 style={{ margin: 0 }}>Historial</h3>
-            <button
-              onClick={() => setShowHistory(false)}
-              style={{
-                padding: '4px 8px',
-                borderRadius: 999,
-                border: 'none',
-                cursor: 'pointer',
-                background: 'rgba(255,255,255,0.15)',
-                color: 'white',
-                fontWeight: 600,
-              }}
-            >
-              ✕
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <h3>Historial</h3>
+            <button onClick={() => setShowHistory(false)}>✕</button>
           </div>
 
-          {sessions.length === 0 && <p style={{ opacity: 0.8 }}>No hay sesiones guardadas</p>}
+          {sessions.length === 0 && <p>No hay sesiones</p>}
 
           {sessions.map((s) => (
-            <div
-              key={s.id}
-              style={{
-                background: 'rgba(15,23,42,0.85)',
-                padding: 10,
-                borderRadius: 12,
-                marginBottom: 10,
-              }}
-            >
+            <div key={s.id} style={{ marginBottom: 12 }}>
               <div>📅 {new Date(s.date).toLocaleDateString()}</div>
               <div>⏱ {(s.durationMs / 60000).toFixed(1)} min</div>
               <div>📏 {(s.distanceMeters / 1000).toFixed(2)} km</div>

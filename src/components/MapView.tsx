@@ -3,8 +3,7 @@ import { useEffect } from 'react';
 import { useGeolocation } from '../hooks/useGeolocation';
 import L from 'leaflet';
 
-type LatLngPoint = { lat: number; lng: number };
-type MapViewProps = { path: LatLngPoint[] }; // sin isRunning
+export type LatLngPoint = { lat: number; lng: number };
 
 function FollowUser({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
@@ -12,7 +11,6 @@ function FollowUser({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-// Íconos simples de colores usando L.DivIcon
 const createColorMarker = (color: string) =>
   L.divIcon({
     className: 'custom-marker',
@@ -20,6 +18,10 @@ const createColorMarker = (color: string) =>
     iconSize: [16, 16],
     iconAnchor: [8, 8],
   });
+
+type MapViewProps = {
+  path: LatLngPoint[];
+};
 
 export default function MapView({ path }: MapViewProps) {
   const { position } = useGeolocation();
@@ -31,20 +33,16 @@ export default function MapView({ path }: MapViewProps) {
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      {position && (
-        <>
-          <FollowUser lat={position.lat} lng={position.lng} />
-
-          {/* Posición actual */}
-          <Marker position={[position.lat, position.lng]} icon={createColorMarker('blue')}>
-            <Popup>Tu ubicación</Popup>
-          </Marker>
-        </>
-      )}
+      {position && <>
+        <FollowUser lat={position.lat} lng={position.lng} />
+        <Marker position={[position.lat, position.lng]} icon={createColorMarker('blue')}>
+          <Popup>Tu ubicación</Popup>
+        </Marker>
+      </>}
 
       {/* Ruta */}
       {path.length > 1 && (
-        <Polyline positions={path.map((p) => [p.lat, p.lng])} pathOptions={{ color: 'red' }} />
+        <Polyline positions={path.map(p => [p.lat, p.lng])} pathOptions={{ color: 'red' }} />
       )}
 
       {/* Inicio */}
