@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/run/'  // <-- Esto es clave para subcarpeta
+  base: '/run/',  // <-- importante: todos los assets usarán /run/ como base
 });
