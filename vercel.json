@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/run/(.*)",
+      "destination": "/run/index.html"
     }
   ],
   "cleanUrls": true,
