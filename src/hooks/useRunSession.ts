@@ -108,7 +108,43 @@ export function useRunSession() {
   useEffect(() => {
     if (status !== 'running' || !position) return;
 
-    setPath((prev) => [...prev, { lat: position.lat, lng: position.lng }]);
+    setPath((prev) => {
+      const now = Date.now();
+      const newPoint: LatLngPoint = {
+        lat: position.lat,
+        lng: position.lng,
+        timestamp: now
+      };
+
+      const lastPoint = prev[prev.length - 1];
+
+      if (!lastPoint) {
+        // Primer punto
+        return [newPoint];
+      }
+
+      const distMeters = haversineDistance(lastPoint, newPoint);
+
+      // 1. Ghost Location Smoothing: Ignorar movimientos menores a 5 metros
+      if (distMeters < 5) return prev;
+
+      // 2. Calcular Ritmo Instantáneo (Pace) para este segmento
+      // Tiempo en minutos desde el último punto
+      const timeDiffMin = (now - (lastPoint.timestamp || now)) / 60000;
+      const distKm = distMeters / 1000;
+
+      let segmentPace = 0;
+      if (distKm > 0 && timeDiffMin > 0) {
+        segmentPace = timeDiffMin / distKm;
+      }
+
+      // Filtrar picos absurdos (ej. teleportación GPS)
+      if (segmentPace > 30) segmentPace = 0;
+
+      newPoint.pace = segmentPace;
+
+      return [...prev, newPoint];
+    });
   }, [position, status]);
 
   /* =========================
