@@ -1,73 +1,130 @@
-# React + TypeScript + Vite
+# 🏃 Still Running App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Still Running App** es una aplicación web *mobile-first* para corredores, diseñada para registrar sesiones de running en tiempo real utilizando geolocalización y mapas interactivos.
 
-Currently, two official plugins are available:
+El proyecto está desarrollado como un **MVP funcional**, enfocado en una arquitectura clara, experiencia de usuario fluida y lógica real de tracking.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## 🎯 Objetivo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Permitir que un runner pueda:
 
-## Expanding the ESLint configuration
+- Iniciar, pausar, reanudar y detener una sesión de running
+- Ver su recorrido dibujado en el mapa en tiempo real
+- Medir tiempo, distancia y ritmo (pace)
+- Guardar sesiones localmente
+- Exportar entrenamientos en formato GPX
+- Revisar el historial de corridas
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🧱 Stack Tecnológico
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **React + TypeScript**
+- **Vite**
+- **Leaflet / React-Leaflet**
+- **Geolocation API**
+- **LocalStorage**
+- **Arquitectura basada en hooks**
+- **Diseño mobile-first**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🗺️ Mapa Interactivo
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Mapa a pantalla completa
+- Seguimiento GPS en tiempo real
+- Dibujo del recorrido con `Polyline`
+- Controles flotantes sin interferir con el mapa
+- Experiencia optimizada para dispositivos móviles
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## ⏱️ Gestión de Sesión
+
+La lógica principal se maneja mediante el hook:
+
+### `useRunSession`
+
+Este hook se encarga de:
+
+- Controlar el estado de la sesión (`idle`, `running`, `paused`)
+- Gestionar el cronómetro
+- Registrar el path GPS
+- Calcular distancia con la fórmula de Haversine
+- Calcular ritmo (min/km)
+- Guardar automáticamente la sesión al finalizar
+
+Toda la lógica está centralizada para evitar inconsistencias de estado.
+
+---
+
+## ▶️ Controles de Running
+
+- **Iniciar**: comienza una nueva sesión
+- **Pausar**: detiene tiempo y GPS sin perder datos
+- **Reanudar**: continúa la sesión pausada
+- **Stop**: guarda el entrenamiento y reinicia el estado
+
+Diseñados para uso rápido durante la actividad.
+
+---
+
+## 📜 Historial de Entrenamientos
+
+- Listado de sesiones guardadas
+- Fecha, duración y distancia
+- Persistencia local
+- Exportación individual en formato GPX
+
+---
+
+## 📦 Exportación GPX
+
+Cada sesión puede exportarse como archivo **GPX estándar**, compatible con:
+
+- Strava
+- Garmin
+- Komoot
+- Google Earth
+
+---
+
+## 🧠 Decisiones Técnicas
+
+- Un único estado de sesión → menor complejidad
+- Hooks desacoplados → escalabilidad
+- Sin backend → funcional offline
+- Base sólida para futuras integraciones
+
+---
+
+## 🚀 Estado del Proyecto
+
+✔ MVP completo  
+✔ Funcional y estable  
+✔ Listo para escalar  
+
+---
+
+## 🔮 Próximas Mejoras
+
+- Autopause inteligente
+- Estadísticas avanzadas
+- Backend con usuarios
+- Autenticación
+- Modo entrenamiento
+- Publicación como PWA
+
+---
+
+## 📷 Screenshots
+
+*(agregar imágenes del mapa, controles y historial)*
+
+---
+
+## 📄 Licencia
+
+MIT
