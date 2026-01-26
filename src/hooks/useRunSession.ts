@@ -3,6 +3,7 @@ import { useGeolocation } from './useGeolocation';
 import type { LatLngPoint } from '../types/RunTypes';
 import { saveSession } from '../types/RunStorage';
 
+
 export type RunStatus = 'idle' | 'running' | 'paused';
 
 export function haversineDistance(p1: LatLngPoint, p2: LatLngPoint) {

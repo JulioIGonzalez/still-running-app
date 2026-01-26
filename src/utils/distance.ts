@@ -1,8 +1,7 @@
-// src/utils/distance.ts
-import type { LatLngPoint } from '../hooks/useRunSession';
+import type { LatLngPoint } from '../types/RunTypes';
 
 export function haversineDistance(p1: LatLngPoint, p2: LatLngPoint) {
-  const R = 6371000; // metros
+  const R = 6371000;
   const toRad = (x: number) => (x * Math.PI) / 180;
 
   const dLat = toRad(p2.lat - p1.lat);
@@ -16,6 +15,5 @@ export function haversineDistance(p1: LatLngPoint, p2: LatLngPoint) {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // metros
+  return R * c;
 }
