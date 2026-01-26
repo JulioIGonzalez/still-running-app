@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useGeolocation } from './useGeolocation';
 import type { LatLngPoint } from '../types/RunTypes';
 import { saveSession } from '../types/RunStorage';
 
-export type RunStatus = 'idle' | 'running';
+export type RunStatus = 'idle' | 'running' | 'paused';
 
 export function haversineDistance(p1: LatLngPoint, p2: LatLngPoint) {
   const R = 6371000;
@@ -27,23 +27,43 @@ export function useRunSession() {
   const [status, setStatus] = useState<RunStatus>('idle');
   const [path, setPath] = useState<LatLngPoint[]>([]);
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+
+  const totalDistance = useMemo(() => {
+    if (path.length < 2) return 0;
+
+    let dist = 0;
+    for (let i = 1; i < path.length; i++) {
+      dist += haversineDistance(path[i - 1], path[i]);
+    }
+    return dist;
+  }, [path]);
 
   const intervalRef = useRef<number | null>(null);
   const { position } = useGeolocation();
 
-  const start = () => {
+  /* =========================
+     CONTROLES
+  ========================= */
+
+  const start = useCallback(() => {
     setPath([]);
     setElapsedMs(0);
     setStatus('running');
-    setIsPaused(false);
-  };
+  }, []);
 
-  const stop = () => {
+  const pause = useCallback(() => {
+    setStatus('paused');
+  }, []);
+
+  const resume = useCallback(() => {
+    setStatus('running');
+  }, []);
+
+  const stop = useCallback(() => {
     if (path.length > 1) {
       saveSession({
         id: crypto.randomUUID(),
-        date: Date.now(), // 👈 NUMBER
+        date: Date.now(),
         durationMs: elapsedMs,
         distanceMeters: totalDistance,
         path,
@@ -52,17 +72,19 @@ export function useRunSession() {
 
     setStatus('idle');
     setElapsedMs(0);
-    setIsPaused(false);
     setPath([]);
-  };
+  }, [path, elapsedMs, totalDistance]);
 
-  const pause = () => setIsPaused(true);
-  const resume = () => setIsPaused(false);
+  /* =========================
+     CRONÓMETRO
+  ========================= */
 
   useEffect(() => {
-    if (status !== 'running' || isPaused) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (status !== 'running') {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
@@ -71,25 +93,28 @@ export function useRunSession() {
     }, 1000);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, [status, isPaused]);
+  }, [status]);
+
+  /* =========================
+     GEOLOCALIZACIÓN
+  ========================= */
 
   useEffect(() => {
-    if (status !== 'running' || isPaused || !position) return;
+    if (status !== 'running' || !position) return;
 
     setPath((prev) => [...prev, { lat: position.lat, lng: position.lng }]);
-  }, [position, status, isPaused]);
+  }, [position, status]);
 
-  const totalDistance = useMemo(() => {
-    if (path.length < 2) return 0;
+  /* =========================
+     MÉTRICAS
+  ========================= */
 
-    return path.reduce((acc, curr, i, arr) => {
-      if (i === 0) return 0;
-      return acc + haversineDistance(arr[i - 1], curr);
-    }, 0);
-  }, [path]);
+
 
   const pace = useMemo(() => {
     if (elapsedMs === 0 || totalDistance === 0) return 0;
@@ -98,15 +123,15 @@ export function useRunSession() {
 
   return {
     status,
-    isRunning: status === 'running',
-    isPaused,
+    isRunning: status !== 'idle',
+    isPaused: status === 'paused',
     path,
     elapsedMs,
     totalDistance,
     pace,
     start,
-    stop,
     pause,
     resume,
+    stop,
   };
 }

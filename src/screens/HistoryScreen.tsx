@@ -46,10 +46,10 @@ export default function HistoryScreen() {
           <div
             key={s.id}
             style={{
-              background: '#020617',
+              background: '#02061767',
               borderRadius: 12,
               padding: 16,
-              boxShadow: '0 8px 20px rgba(0,0,0,0.4)',
+              boxShadow: '0 8px 20px rgba(0, 0, 0, 0.59)',
             }}
           >
             <div style={{ fontSize: 14, opacity: 0.7 }}>

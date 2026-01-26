@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MapView from '../components/MapView';
 import { useRunSession } from '../hooks/useRunSession';
 import { getSessions } from '../types/RunStorage';
@@ -8,6 +8,18 @@ const formatTime = (ms: number) => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+// Generar GPX simple desde path
+const generateGPX = (path: { lat: number; lng: number }[]) => {
+  const header = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="StillRunningApp">
+<trk><name>Run Session</name><trkseg>`;
+  const footer = '</trkseg></trk></gpx>';
+  const points = path
+    .map((p) => `<trkpt lat="${p.lat}" lon="${p.lng}"></trkpt>`)
+    .join('');
+  return header + points + footer;
 };
 
 export default function RunScreen() {
@@ -23,16 +35,51 @@ export default function RunScreen() {
   } = useRunSession();
 
   const [showHistory, setShowHistory] = useState(false);
-  const [mapZoom, setMapZoom] = useState(13); // control de zoom
-  const sessions = getSessions();
+  const [sessions, setSessions] = useState(getSessions());
+  const autoPause = true;
 
-  const zoomIn = () => setMapZoom((z) => Math.min(z + 1, 20));
-  const zoomOut = () => setMapZoom((z) => Math.max(z - 1, 1));
+  // Auto-pausa: si no se mueve > 5 segundos
+  const [lastPosition, setLastPosition] = useState<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    // Si autoPause está apagado, no estamos corriendo, o el path es muy corto, no hacemos nada
+    if (!autoPause || path.length < 2 || !isRunning) return;
+
+    const current = path[path.length - 1];
+    if (!lastPosition) {
+      setLastPosition(current);
+      return;
+    }
+
+    // Calculamos distancia simple (aprox) para ver si se movió
+    const distanceMoved = Math.sqrt(
+      (current.lat - lastPosition.lat) ** 2 + (current.lng - lastPosition.lng) ** 2
+    );
+
+    // Si no se movió suficiente, pausamos. Si se movió y estaba pausado, reanudamos.
+    if (distanceMoved < 0.00001 && !isPaused) {
+      pause();
+    } else if (distanceMoved >= 0.00001 && isPaused) {
+      resume();
+    }
+    setLastPosition(current);
+  }, [path, autoPause, isPaused, lastPosition, pause, resume, isRunning]);
+
+  // Descargar GPX de una sesión
+  const downloadGPX = (s: typeof sessions[0]) => {
+    const gpxData = generateGPX(s.path);
+    const blob = new Blob([gpxData], { type: 'application/gpx+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `run-${new Date(s.date).toISOString()}.gpx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       {/* MAPA */}
-      <MapView path={path} zoom={mapZoom} />
+      <MapView path={path} />
 
       {/* CRONÓMETRO */}
       <div
@@ -146,7 +193,10 @@ export default function RunScreen() {
         )}
         {isRunning && (
           <button
-            onClick={stop}
+            onClick={() => {
+              stop();
+              setTimeout(() => setSessions(getSessions()), 100);
+            }}
             style={{
               height: 90,
               width: 90,
@@ -165,52 +215,7 @@ export default function RunScreen() {
         )}
       </div>
 
-      {/* BOTONES DE ZOOM (lado derecho medio) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          right: 20,
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 12,
-          zIndex: 1000,
-        }}
-      >
-        <button
-          onClick={zoomIn}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 12,
-            background: '#3b82f6',
-            border: 'none',
-            fontSize: 24,
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
-          }}
-        >
-          +
-        </button>
-        <button
-          onClick={zoomOut}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 12,
-            background: '#ef4444',
-            border: 'none',
-            fontSize: 24,
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
-          }}
-        >
-          –
-        </button>
-      </div>
+
 
       {/* HISTORIAL FLOTANTE */}
       {showHistory && (
@@ -271,6 +276,22 @@ export default function RunScreen() {
               <div>📅 {new Date(s.date).toLocaleDateString()}</div>
               <div>⏱ {(s.durationMs / 60000).toFixed(1)} min</div>
               <div>📏 {(s.distanceMeters / 1000).toFixed(2)} km</div>
+              <button
+                onClick={() => downloadGPX(s)}
+                style={{
+                  marginTop: 6,
+                  width: '100%',
+                  padding: '6px 0',
+                  fontSize: 14,
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: '#3b82f6',
+                  color: 'white',
+                }}
+              >
+                ⬇ Exportar GPX
+              </button>
             </div>
           ))}
         </div>
