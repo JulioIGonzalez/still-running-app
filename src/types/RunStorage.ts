@@ -21,6 +21,15 @@ export function getSessions(): StoredRunSession[] {
   }
 }
 
+export function getSessionById(id: string): StoredRunSession | null {
+  return getSessions().find((s) => s.id === id) ?? null;
+}
+
+export function deleteSession(id: string) {
+  const sessions = getSessions().filter((s) => s.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+}
+
 export function saveSession(session: StoredRunSession) {
   const sessions = getSessions();
   sessions.unshift(session);

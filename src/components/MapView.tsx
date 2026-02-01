@@ -5,8 +5,6 @@ import L from 'leaflet';
 import type { LatLngPoint } from '../types/RunTypes';
 import { getPaceColor } from '../utils/runUtils';
 
-
-
 function MapEvents({ onDragStart }: { onDragStart: () => void }) {
   useMapEvents({
     dragstart: () => onDragStart(),
@@ -22,6 +20,16 @@ function FollowUser({ lat, lng, active }: { lat: number; lng: number; active: bo
   return null;
 }
 
+function FitBounds({ path }: { path: LatLngPoint[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (path.length < 2) return;
+    const bounds = L.latLngBounds(path.map((p) => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+  }, [map, path]);
+  return null;
+}
+
 const createColorMarker = (color: string) =>
   L.divIcon({
     className: 'custom-marker',
@@ -32,28 +40,41 @@ const createColorMarker = (color: string) =>
 
 type MapViewProps = {
   path: LatLngPoint[];
+  readOnly?: boolean;
+  ghostPath?: LatLngPoint[];
 };
 
-export default function MapView({ path }: MapViewProps) {
+export default function MapView({ path, readOnly = false, ghostPath }: MapViewProps) {
   const { position } = useGeolocation();
   const [following, setFollowing] = useState(true);
 
   return (
     <div className="w-full h-full relative group">
       <MapContainer center={[-34.6037, -58.3816]} zoom={15} style={{ width: '100%', height: '100%' }} zoomControl={false}>
-        <MapEvents onDragStart={() => setFollowing(false)} />
+        {!readOnly && <MapEvents onDragStart={() => setFollowing(false)} />}
+        {readOnly && path.length >= 2 && <FitBounds path={path} />}
 
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
-        {position && <>
-          <FollowUser lat={position.lat} lng={position.lng} active={following} />
-          <Marker position={[position.lat, position.lng]} icon={createColorMarker('blue')}>
-            <Popup>Tu ubicación</Popup>
-          </Marker>
-        </>}
+        {!readOnly && position && (
+          <>
+            <FollowUser lat={position.lat} lng={position.lng} active={following} />
+            <Marker position={[position.lat, position.lng]} icon={createColorMarker('blue')}>
+              <Popup>Tu ubicación</Popup>
+            </Marker>
+          </>
+        )}
+
+        {/* Ruta fantasma (objetivo a superar) */}
+        {ghostPath && ghostPath.length > 1 && (
+          <Polyline
+            positions={ghostPath.map((p) => [p.lat, p.lng])}
+            pathOptions={{ color: '#94a3b8', weight: 4, opacity: 0.6, dashArray: '8,8' }}
+          />
+        )}
 
         {/* Ruta coloreada por tramos */}
         {path.length > 1 && path.map((point, i) => {
@@ -84,7 +105,7 @@ export default function MapView({ path }: MapViewProps) {
       </MapContainer>
 
       {/* Recenter Button */}
-      {!following && (
+      {!readOnly && !following && (
         <button
           onClick={() => setFollowing(true)}
           className="absolute bottom-6 right-6 z-[1000] p-3 bg-white text-black rounded-full shadow-xl hover:bg-gray-100 transition-transform active:scale-95 flex items-center justify-center w-12 h-12"
